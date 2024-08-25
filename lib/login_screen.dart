@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-
-import 'users_screen.dart'; // Import the UsersScreen
+import 'base_navigation_screen.dart'; // Import BaseNavigationScreen
+import 'admin_screen.dart'; // Import AdminScreen
+import 'users_screen.dart'; // Import UsersScreen
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -28,13 +30,22 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login successful!')),
-        );
+        final responseData = jsonDecode(response.body);
+        final username = responseData['username'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => UsersScreen()),
+          MaterialPageRoute(
+            builder: (context) =>
+                BaseNavigationScreen(), // Just show BaseNavigationScreen
+          ),
         );
+
+        // After pushing BaseNavigationScreen, it will handle which screen to show based on login status
+        // In BaseNavigationScreen, _getBody() method will decide which screen to show.
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Invalid credentials')),
@@ -50,9 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
+      appBar: AppBar(title: Text('Login')),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(

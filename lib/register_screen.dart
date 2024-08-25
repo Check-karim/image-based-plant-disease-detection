@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-import 'login_screen.dart'; // Import the LoginScreen
+import 'login_screen.dart'; // Import LoginScreen
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -29,17 +28,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (response.statusCode == 201) {
-      // Handle successful registration
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('User registered successfully!')),
       );
-      // Navigate to the login screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     } else {
-      // Handle failed registration
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to register user')),
       );
@@ -49,9 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Register'),
-      ),
+      appBar: AppBar(title: Text('Register')),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
