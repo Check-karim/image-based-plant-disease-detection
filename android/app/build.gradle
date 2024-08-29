@@ -1,8 +1,8 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Firebase Google Services plugin
+    id "dev.flutter.flutter-gradle-plugin" // Flutter plugin
 }
 
 def localProperties = new Properties()
@@ -25,34 +25,45 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.example.plant_detection"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
+    compileSdk = 34 // Make sure this is aligned with the latest version
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.plant_detection"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        applicationId "com.example.app"
+        minSdkVersion 21 // You can adjust this to your minimum supported SDK version
+        targetSdkVersion 34 // Make sure this is aligned with the latest version
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+
+        // Ensure multidex is enabled if you're using a lot of dependencies
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    // Enables multidex support for older Android versions
+    dexOptions {
+        javaMaxHeapSize "4g"
     }
 }
 
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation "androidx.multidex:multidex:2.0.1" // Required for multidex support
+}
+
+apply plugin: 'com.google.gms.google-services' // Apply the Google services plugin at the end

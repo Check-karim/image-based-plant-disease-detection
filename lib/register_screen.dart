@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'login_screen.dart'; // Import the LoginScreen
 
@@ -14,34 +14,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late String _username;
   late String _email;
   late String _password;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _register() async {
-    final response = await http.post(
-      Uri.parse('http://127.0.0.1:5000/register'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
+    try {
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _email,
+        password: _password,
+      );
+
+      // Store additional user information in Firestore
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'username': _username,
         'email': _email,
-        'password': _password,
-      }),
-    );
+        'userType': 'user', // Setting userType to 'user' for normal users
+      });
 
-    if (response.statusCode == 201) {
-      // Handle successful registration
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('User registered successfully!')),
       );
+
       // Navigate to the login screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
-    } else {
-      // Handle failed registration
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to register user')),
+        SnackBar(content: Text('Failed to register user: $e')),
       );
     }
   }

@@ -1,7 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'admin_screen.dart'; // Import the AdminScreen
 import 'users_screen.dart'; // Import the UsersScreen
 
 class LoginScreen extends StatefulWidget {
@@ -13,36 +14,34 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   late String _username;
   late String _password;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _login() async {
     try {
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/login'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'username': _username,
-          'password': _password,
-        }),
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _username, // Assuming username is an email
+        password: _password,
       );
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login successful!')),
+      // Fetch user data from Firestore
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+      String userType = userDoc.get('userType'); // 'admin' or 'user'
+
+      if (userType == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminScreen()),
         );
+      } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => UsersScreen()),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invalid credentials')),
-        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
+        SnackBar(content: Text('Login failed: $e')),
       );
     }
   }
@@ -61,10 +60,10 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               TextFormField(
-                decoration: InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(labelText: 'email'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your username';
+                    return 'Please enter your email';
                   }
                   return null;
                 },
