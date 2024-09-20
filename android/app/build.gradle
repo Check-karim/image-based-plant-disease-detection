@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
+    id "com.google.gms.google-services" // Firebase Google Services plugin
     id "dev.flutter.flutter-gradle-plugin" // Flutter plugin applied declaratively
 }
 
@@ -41,7 +42,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.gpt_vision_leaf_detect"
+        applicationId "com.example.app"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
@@ -61,4 +62,7 @@ flutter {
 
 dependencies {
     // Add any necessary dependencies here
+    implementation platform('com.google.firebase:firebase-bom:32.0.0')  // Firebase BOM version
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
 }

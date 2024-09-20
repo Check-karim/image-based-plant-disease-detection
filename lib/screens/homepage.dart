@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gpt_vision_leaf_detect/constants/constants.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add FirebaseAuth for logout functionality
 
 import '../services/api_service.dart';
+import 'home.dart'; // Import the HomeScreen for navigation after logout
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,7 +28,7 @@ class _MyHomePageState extends State<HomePage> {
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile =
-        await ImagePicker().pickImage(source: source, imageQuality: 50);
+    await ImagePicker().pickImage(source: source, imageQuality: 50);
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
@@ -40,7 +42,7 @@ class _MyHomePageState extends State<HomePage> {
     });
     try {
       diseaseName =
-          await apiService.sendImageToGPT4Vision(image: _selectedImage!);
+      await apiService.sendImageToGPT4Vision(image: _selectedImage!);
     } catch (error) {
       _showErrorSnackBar(error);
     } finally {
@@ -57,7 +59,7 @@ class _MyHomePageState extends State<HomePage> {
     try {
       if (diseasePrecautions == '') {
         diseasePrecautions =
-            await apiService.sendMessageGPT(diseaseName: diseaseName);
+        await apiService.sendMessageGPT(diseaseName: diseaseName);
       }
       _showSuccessDialog(diseaseName, diseasePrecautions);
     } catch (error) {
@@ -89,9 +91,29 @@ class _MyHomePageState extends State<HomePage> {
     ).show();
   }
 
+  // Logout function to sign out the user and navigate to the home screen
+  void _logout() async {
+    await FirebaseAuth.instance.signOut(); // Log out the user
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen()),
+          (Route<dynamic> route) => false, // Clear the navigation stack
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Plant Disease Detection'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout, // Add logout button functionality
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: Column(
         children: <Widget>[
           const SizedBox(height: 20),
@@ -102,8 +124,7 @@ class _MyHomePageState extends State<HomePage> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
-                    // Top right corner
-                    bottomLeft: Radius.circular(50.0), // Bottom right corner
+                    bottomLeft: Radius.circular(50.0),
                   ),
                   color: themeColor,
                 ),
@@ -114,18 +135,14 @@ class _MyHomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: const BorderRadius.only(
-                    // Top right corner
-                    bottomLeft: Radius.circular(50.0), // Bottom right corner
+                    bottomLeft: Radius.circular(50.0),
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
-                      // Shadow color with some transparency
                       spreadRadius: 1,
-                      // Extend the shadow to all sides equally
                       blurRadius: 5,
-                      // Soften the shadow
-                      offset: const Offset(2, 2), // Position of the shadow
+                      offset: const Offset(2, 2),
                     ),
                   ],
                 ),
@@ -148,10 +165,7 @@ class _MyHomePageState extends State<HomePage> {
                             style: TextStyle(color: textColor),
                           ),
                           const SizedBox(width: 10),
-                          Icon(
-                            Icons.image,
-                            color: textColor,
-                          )
+                          Icon(Icons.image, color: textColor),
                         ],
                       ),
                     ),
@@ -168,7 +182,7 @@ class _MyHomePageState extends State<HomePage> {
                           Text('START CAMERA',
                               style: TextStyle(color: textColor)),
                           const SizedBox(width: 10),
-                          Icon(Icons.camera_alt, color: textColor)
+                          Icon(Icons.camera_alt, color: textColor),
                         ],
                       ),
                     ),
@@ -179,59 +193,56 @@ class _MyHomePageState extends State<HomePage> {
           ),
           _selectedImage == null
               ? Container(
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  child: Image.asset('assets/images/pick1.png'),
-                )
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Image.asset('assets/images/pick1.png'),
+          )
               : Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.all(20),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.file(
-                        _selectedImage!,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+            child: Container(
+              width: double.infinity,
+              decoration:
+              BoxDecoration(borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.all(20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.file(
+                  _selectedImage!,
+                  fit: BoxFit.cover,
                 ),
+              ),
+            ),
+          ),
           if (_selectedImage != null)
             detecting
                 ? SpinKitWave(
-                    color: themeColor,
-                    size: 30,
-                  )
+              color: themeColor,
+              size: 30,
+            )
                 : Container(
-                    width: double.infinity,
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: themeColor,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 15),
-                        // Set some horizontal and vertical padding
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(15), // Rounded corners
-                        ),
-                      ),
-                      onPressed: () {
-                        detectDisease();
-                      },
-                      child: const Text(
-                        'DETECT',
-                        style: TextStyle(
-                          color: Colors.white, // Set the text color to white
-                          fontSize: 16, // Set the font size
-                          fontWeight:
-                              FontWeight.bold, // Set the font weight to bold
-                        ),
-                      ),
-                    ),
+              width: double.infinity,
+              padding:
+              const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: themeColor,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
                   ),
+                ),
+                onPressed: () {
+                  detectDisease();
+                },
+                child: const Text(
+                  'DETECT',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           if (diseaseName != '')
             Column(
               children: [
@@ -262,25 +273,25 @@ class _MyHomePageState extends State<HomePage> {
                 ),
                 precautionLoading
                     ? const SpinKitWave(
-                        color: Colors.blue,
-                        size: 30,
-                      )
+                  color: Colors.blue,
+                  size: 30,
+                )
                     : ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 15),
-                        ),
-                        onPressed: () {
-                          showPrecautions();
-                        },
-                        child: Text(
-                          'PRECAUTION',
-                          style: TextStyle(
-                            color: textColor,
-                          ),
-                        ),
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15),
+                  ),
+                  onPressed: () {
+                    showPrecautions();
+                  },
+                  child: Text(
+                    'PRECAUTION',
+                    style: TextStyle(
+                      color: textColor,
+                    ),
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 30),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:gpt_vision_leaf_detect/screens/homepage.dart';
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase core package
+import 'package:gpt_vision_leaf_detect/screens/home.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Initialize Firebase
   runApp(const MyApp());
 }
 
@@ -18,7 +21,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreenAccent),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: HomeScreen(),
     );
   }
 }

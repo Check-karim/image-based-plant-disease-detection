@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "249177044092",
+    "project_id": "plant-deases-f4df2",
+    "storage_bucket": "plant-deases-f4df2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:249177044092:android:e533f120cc9bb142a305f9",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATnrB9ucQCN-MNT3C2WS1koH8J_vUzfVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
