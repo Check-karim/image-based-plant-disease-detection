@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gpt_vision_leaf_detect/constants/constants.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Add FirebaseAuth for logout functionality
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../services/api_service.dart';
 import 'home.dart'; // Import the HomeScreen for navigation after logout
@@ -26,7 +27,14 @@ class _MyHomePageState extends State<HomePage> {
   bool detecting = false;
   bool precautionLoading = false;
 
+  // Reset information when selecting new image from gallery or camera
   Future<void> _pickImage(ImageSource source) async {
+    setState(() {
+      _selectedImage = null;
+      diseaseName = '';
+      diseasePrecautions = '';
+    });
+
     final pickedFile =
     await ImagePicker().pickImage(source: source, imageQuality: 50);
     if (pickedFile != null) {
@@ -36,6 +44,7 @@ class _MyHomePageState extends State<HomePage> {
     }
   }
 
+  // Function to detect disease using the image
   detectDisease() async {
     setState(() {
       detecting = true;
@@ -52,6 +61,7 @@ class _MyHomePageState extends State<HomePage> {
     }
   }
 
+  // Function to show disease precautions
   showPrecautions() async {
     setState(() {
       precautionLoading = true;
@@ -71,6 +81,7 @@ class _MyHomePageState extends State<HomePage> {
     }
   }
 
+  // Show error message
   void _showErrorSnackBar(Object error) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(error.toString()),
@@ -78,6 +89,7 @@ class _MyHomePageState extends State<HomePage> {
     ));
   }
 
+  // Show dialog with success information
   void _showSuccessDialog(String title, String content) {
     AwesomeDialog(
       context: context,
@@ -87,8 +99,61 @@ class _MyHomePageState extends State<HomePage> {
       desc: content,
       btnOkText: 'Got it',
       btnOkColor: themeColor,
-      btnOkOnPress: () {},
+      btnOkOnPress: () async {
+        if (_selectedImage != null) {
+          // Save the image, precautions, and date to Firebase
+          await _savePrecautionAndImageToFirebase(
+              diseaseName, diseasePrecautions, _selectedImage!);
+
+          // Reset the state after saving to Firestore
+          setState(() {
+            _selectedImage = null; // Reset the selected image
+            diseaseName = ''; // Reset the disease name
+            diseasePrecautions = ''; // Reset the precautions
+          });
+        }
+      },
     ).show();
+  }
+
+  // Function to save precautions and image to Firebase
+  Future<void> _savePrecautionAndImageToFirebase(
+      String diseaseName, String precautions, File imageFile) async {
+    try {
+      // Upload the image to Firebase Storage
+      String imageUrl = await _uploadImageToFirebase(imageFile);
+
+      // Save the data to Firestore
+      await FirebaseFirestore.instance.collection('precautions').add({
+        'diseaseName': diseaseName,
+        'precautions': precautions,
+        'imageUrl': imageUrl, // Store the uploaded image URL
+        'date': DateTime.now(), // Store the current date
+      });
+      print('Precaution and image saved to Firebase');
+    } catch (error) {
+      _showErrorSnackBar('Failed to save precaution and image: $error');
+    }
+  }
+
+  // Function to upload image to Firebase
+  Future<String> _uploadImageToFirebase(File imageFile) async {
+    try {
+      // Create a unique file name for the image
+      String fileName = 'images/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      // Upload the image to Firebase Storage
+      UploadTask uploadTask =
+      FirebaseStorage.instance.ref(fileName).putFile(imageFile);
+      TaskSnapshot taskSnapshot = await uploadTask;
+
+      // Get the image URL after upload
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      return imageUrl;
+    } catch (error) {
+      _showErrorSnackBar('Image upload failed: $error');
+      rethrow; // Re-throw to handle it in the calling method
+    }
   }
 
   // Logout function to sign out the user and navigate to the home screen
@@ -219,8 +284,8 @@ class _MyHomePageState extends State<HomePage> {
             )
                 : Container(
               width: double.infinity,
-              padding:
-              const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                  vertical: 0, horizontal: 20),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: themeColor,
